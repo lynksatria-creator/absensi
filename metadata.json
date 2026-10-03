@@ -1,0 +1,6 @@
+{
+  "name": "n8n WhatsApp Absensi AI to Google Sheets",
+  "description": "Sistem otomasi rekap absensi karyawan/promotor berbasis n8n, AI Vision OCR WhatsApp Group, Google Sheets harian, anti-duplikasi, & live simulator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

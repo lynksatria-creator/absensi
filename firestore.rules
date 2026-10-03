@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny all paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for User profile
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'role', 'createdAt'])
+        && data.uid is string && data.uid.size() <= 128
+        && data.email is string && data.email.size() <= 128
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128))
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 2048))
+        && (!('role' in data) || (data.role in ['admin', 'hrd', 'manager', 'staff']))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
+    }
+
+    // Validation for Employee Master Data
+    function isValidEmployee(data) {
+      return data.keys().hasAll(['nip', 'nama', 'noHp', 'jabatan', 'kantorCabang'])
+        && data.nip is string && data.nip.size() <= 64
+        && data.nama is string && data.nama.size() <= 128
+        && data.noHp is string && data.noHp.size() <= 64
+        && data.jabatan is string && data.jabatan.size() <= 128
+        && data.kantorCabang is string && data.kantorCabang.size() <= 64
+        && (!('statusAktif' in data) || (data.statusAktif in ['Aktif', 'Nonaktif']))
+        && (!('email' in data) || (data.email is string && data.email.size() <= 128))
+        && (!('id' in data) || (data.id is string && data.id.size() <= 128))
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    // Validation for Attendance Record
+    function isValidAttendance(data) {
+      return data.keys().hasAll(['nama', 'tanggal', 'jam', 'status'])
+        && data.nama is string && data.nama.size() <= 128
+        && data.tanggal is string && data.tanggal.size() <= 32
+        && data.jam is string && data.jam.size() <= 32
+        && (data.status in ['MASUK', 'PULANG', 'DINAS', 'IZIN', 'SAKIT', 'CUTI', 'LAINNYA'])
+        && (!('id' in data) || (data.id is string && data.id.size() <= 128))
+        && (!('nik' in data) || (data.nik is string && data.nik.size() <= 64))
+        && (!('cabang' in data) || (data.cabang is string && data.cabang.size() <= 64))
+        && (!('confidence' in data) || (data.confidence is number))
+        && (!('statusValidasi' in data) || (data.statusValidasi in ['VALID', 'PERLU_VERIFIKASI', 'DUPLIKAT']));
+    }
+
+    // Validation for System Config
+    function isValidConfig(data) {
+      return data.keys().hasAll(['googleSheetId', 'jamMasuk'])
+        && data.googleSheetId is string && data.googleSheetId.size() <= 128
+        && data.jamMasuk is string && data.jamMasuk.size() <= 16;
+    }
+
+    // User Collection: Isolated per authenticated user
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUser(incoming())
+        && incoming().uid == existing().uid;
+      allow delete: if isOwner(userId);
+    }
+
+    // Employees Collection: Master Database Karyawan Cabang
+    match /employees/{employeeId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidId(employeeId) && isValidEmployee(incoming());
+      allow delete: if isSignedIn() && isValidId(employeeId);
+    }
+
+    // Attendance Records Collection
+    match /attendance/{attendanceId} {
+      allow get: if isSignedIn() && isValidId(attendanceId);
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(attendanceId) && isValidAttendance(incoming());
+      allow update: if isSignedIn() && isValidId(attendanceId) && isValidAttendance(incoming());
+      allow delete: if isSignedIn() && isValidId(attendanceId);
+    }
+
+    // System Config Collection
+    match /config/{configId} {
+      allow get: if isSignedIn() && isValidId(configId);
+      allow list: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidId(configId) && isValidConfig(incoming());
+      allow delete: if false;
+    }
+  }
+}

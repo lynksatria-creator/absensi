@@ -1,0 +1,103 @@
+{
+  "entities": {
+    "AttendanceRecord": {
+      "title": "AttendanceRecord",
+      "description": "Catatan absensi karyawan/promotor dari WhatsApp Group",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "timestamp": { "type": "string", "maxLength": 64 },
+        "groupId": { "type": "string", "maxLength": 128 },
+        "groupName": { "type": "string", "maxLength": 128 },
+        "nama": { "type": "string", "maxLength": 128 },
+        "nik": { "type": "string", "maxLength": 64 },
+        "jabatan": { "type": "string", "maxLength": 128 },
+        "cabang": { "type": "string", "maxLength": 64 },
+        "tanggal": { "type": "string", "maxLength": 32 },
+        "jam": { "type": "string", "maxLength": 32 },
+        "status": {
+          "type": "string",
+          "enum": ["MASUK", "PULANG", "DINAS", "IZIN", "SAKIT", "CUTI", "LAINNYA"]
+        },
+        "lokasi": { "type": "string", "maxLength": 256 },
+        "keterangan": { "type": "string", "maxLength": 512 },
+        "confidence": { "type": "number" },
+        "messageId": { "type": "string", "maxLength": 128 },
+        "urlFoto": { "type": "string", "maxLength": 2048 },
+        "statusValidasi": {
+          "type": "string",
+          "enum": ["VALID", "PERLU_VERIFIKASI", "DUPLIKAT"]
+        },
+        "lateMinutes": { "type": "number" },
+        "statusKetepatan": { "type": "string", "maxLength": 64 },
+        "waktuUpdate": { "type": "string", "maxLength": 64 },
+        "userId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["nama", "tanggal", "jam", "status"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Master data profil dan nomor WhatsApp karyawan kantor cabang",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "nip": { "type": "string", "maxLength": 64 },
+        "nama": { "type": "string", "maxLength": 128 },
+        "noHp": { "type": "string", "maxLength": 64 },
+        "jabatan": { "type": "string", "maxLength": 128 },
+        "kantorCabang": { "type": "string", "maxLength": 64 },
+        "statusAktif": { "type": "string", "enum": ["Aktif", "Nonaktif"] },
+        "email": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["nip", "nama", "noHp", "jabatan", "kantorCabang"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Profil pengguna akun terotentikasi",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "photoURL": { "type": "string", "maxLength": 2048 },
+        "role": { "type": "string", "enum": ["admin", "hrd", "manager", "staff"] },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["uid", "email"]
+    },
+    "SystemConfig": {
+      "title": "SystemConfig",
+      "description": "Konfigurasi operasional absensi n8n",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64 },
+        "googleSheetId": { "type": "string", "maxLength": 128 },
+        "jamMasuk": { "type": "string", "maxLength": 16 },
+        "confidenceMinimum": { "type": "number" },
+        "adminPhone": { "type": "string", "maxLength": 32 },
+        "timezone": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["googleSheetId", "jamMasuk"]
+    }
+  },
+  "firestore": {
+    "/attendance/{attendanceId}": {
+      "schema": "AttendanceRecord",
+      "description": "Daftar transaksi absensi presensi karyawan"
+    },
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Master data karyawan dan nomor WhatsApp cabang"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Profil pengguna akun HRD dan Admin"
+    },
+    "/config/{configId}": {
+      "schema": "SystemConfig",
+      "description": "Parameter konfigurasi aplikasi"
+    }
+  }
+}
