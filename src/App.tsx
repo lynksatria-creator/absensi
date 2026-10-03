@@ -19,6 +19,7 @@ import { Configurator } from './components/Configurator';
 import { DeploymentGuide } from './components/DeploymentGuide';
 import { AppsScriptModal } from './components/AppsScriptModal';
 import { CsvExportModal } from './components/CsvExportModal';
+import { GitHubPublishModal } from './components/GitHubPublishModal';
 import { WhatsAppQrScanner } from './components/WhatsAppQrScanner';
 import { EmployeeDatabaseManager } from './components/EmployeeDatabaseManager';
 import {
@@ -74,6 +75,7 @@ export default function App() {
   // Modal and toast states
   const [isAppsScriptOpen, setIsAppsScriptOpen] = useState(false);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
   const [copiedWorkflow, setCopiedWorkflow] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -351,6 +353,7 @@ export default function App() {
         onCopyWorkflow={handleCopyWorkflow}
         onOpenAppsScript={() => setIsAppsScriptOpen(true)}
         onOpenCsvExport={() => setIsCsvModalOpen(true)}
+        onOpenGitHubPublish={() => setIsGitHubModalOpen(true)}
         copied={copiedWorkflow}
         currentUser={currentUser}
         onLogin={handleLogin}
@@ -483,6 +486,12 @@ export default function App() {
         branchRecap={branchRecap}
         employeeRecap={employeeRecap}
         logData={logData}
+      />
+
+      {/* GitHub Production Publish Modal */}
+      <GitHubPublishModal
+        isOpen={isGitHubModalOpen}
+        onClose={() => setIsGitHubModalOpen(false)}
       />
 
       {/* Footer */}

@@ -11,6 +11,7 @@ import {
   LogIn,
   LogOut,
   User as UserIcon,
+  Github,
 } from 'lucide-react';
 import type { User as FirebaseUser } from 'firebase/auth';
 
@@ -19,6 +20,7 @@ interface HeaderProps {
   onCopyWorkflow: () => void;
   onOpenAppsScript: () => void;
   onOpenCsvExport?: () => void;
+  onOpenGitHubPublish?: () => void;
   copied: boolean;
   currentUser?: FirebaseUser | null;
   onLogin?: () => void;
@@ -30,6 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
   onCopyWorkflow,
   onOpenAppsScript,
   onOpenCsvExport,
+  onOpenGitHubPublish,
   copied,
   currentUser,
   onLogin,
@@ -93,6 +96,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Download className="w-3.5 h-3.5 text-teal-600" />
                 <span>Ekspor CSV</span>
+              </button>
+            )}
+
+            {/* Publish GitHub */}
+            {onOpenGitHubPublish && (
+              <button
+                onClick={onOpenGitHubPublish}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 active:bg-slate-950 rounded-lg transition-colors shadow-xs"
+                title="Publish codebase ke production GitHub repository"
+              >
+                <Github className="w-3.5 h-3.5" />
+                <span>Publish GitHub</span>
               </button>
             )}
 

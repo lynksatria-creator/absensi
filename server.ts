@@ -2,6 +2,9 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
+import { exec } from 'child_process';
+import path from 'path';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -71,6 +74,52 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
+  });
+});
+
+// Download Git Bundle Archive
+app.get('/api/download-bundle', (req, res) => {
+  const bundlePath = path.join(process.cwd(), 'absensi-repo.bundle');
+  if (fs.existsSync(bundlePath)) {
+    res.download(bundlePath, 'absensi-whatsapp-production.bundle');
+  } else {
+    // Generate bundle on the fly if not exists
+    exec('git bundle create absensi-repo.bundle --all', (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Gagal membuat bundle repository' });
+      }
+      res.download(bundlePath, 'absensi-whatsapp-production.bundle');
+    });
+  }
+});
+
+// Push to GitHub endpoint
+app.post('/api/github-push', (req, res) => {
+  const { token, repoUrl = 'https://github.com/lynksatria-creator/absensi.git' } = req.body;
+  if (!token || typeof token !== 'string') {
+    return res.status(400).json({ error: 'GitHub Personal Access Token (PAT) diperlukan' });
+  }
+
+  const cleanToken = token.trim();
+  const repoHost = repoUrl.replace(/^https?:\/\//, '');
+  const authenticatedUrl = `https://${cleanToken}@${repoHost}`;
+
+  exec(`git push "${authenticatedUrl}" main`, (error, stdout, stderr) => {
+    if (error) {
+      console.error('Git push error:', stderr || error.message);
+      return res.status(500).json({
+        success: false,
+        error: stderr || error.message,
+        message: 'Gagal push ke GitHub. Pastikan token memiliki scope izin "repo".',
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Repository berhasil dipublikasikan ke GitHub pada branch main!',
+      repoUrl,
+      output: stdout,
+    });
   });
 });
 
